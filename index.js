@@ -1,14 +1,32 @@
 import inquirer from 'inquirer';
 import fs from "fs";
+import glob from "glob"
 import inquirerTablePrompt from "../inquirer-table-prompt/index.js";
 
 inquirer.registerPrompt("table", inquirerTablePrompt);
 
-// TODO: detect .env files locally, or pull from  config
-const envs = ["local", "development", "production", "test"]
+// TODO: docs - cant use env name 'generic'
+
+// TODO: cli - on first use, user can pass flag `--init` to be asked which envs they want 
+// (show list of common ones and option for custom). Check local files and compare to chosen envs - if there are any conflicts then ask user if they want to 
+// maintain local vars or wipe them and start fresh
+
+// for all other use cases (no `--init` flag):
+// search for all files in folder matching `.env*`, then parse out the envs.
+// if there is no envs found, warn user and prompt to go through init?
+
+const pattern = ".env.*";
+const envPaths = glob.sync(pattern);
+if (!envPaths.length) {
+  console.warn(`No ${pattern} files found. To get started, pass the "--init" flag`)
+  process.exit(0);
+}
+
+const envs = envPaths.map(filename => filename.split(".env.")[1]);
+
 const { rows, columns } = prepareInquirerData(envs);
 runManager({ rows, columns }).then(() => { 
-  // console.log("All done") 
+  // console.log("done!") 
 });
 
 async function runManager({ rows, columns }) {
@@ -120,7 +138,6 @@ function prepareInquirerData(envs) {
 
 function readEnv(env) {
   const rawDotenv = fs.readFileSync(`.env.${env}`, "utf8");
-  // TODO: If file doesnt exist, create it or just ignore it
   const jsonContent = convertRawDotenvToJson(rawDotenv);
   return jsonContent;
 }
@@ -153,7 +170,7 @@ function convertRawDotenvToJson(rawDotenv) {
  * @param {*} filepath 
  */
 function writeEnv(env, jsonContent) {
-  let fileStr = "";
+  // TODO: add timestamp at top of file
   Object.keys(jsonContent).forEach(varName => {
     fileStr += `${varName}=${jsonContent[varName]}\n`;
   })
