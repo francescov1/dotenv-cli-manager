@@ -1,7 +1,7 @@
-import inquirer from 'inquirer';
-import fs from "fs";
-import glob from "glob"
-import inquirerTablePrompt from "./inquirer-table-prompt-fork/index.js";
+const inquirer = require('inquirer');
+const fs = require("fs");
+const glob = require("glob")
+const inquirerTablePrompt = require("./inquirer-table-prompt-fork/index.js");
 
 inquirer.registerPrompt("table", inquirerTablePrompt);
 

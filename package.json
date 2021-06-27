@@ -12,7 +12,6 @@
   },
   "author": "Francesco Virga @francescov1",
   "license": "ISC",
-  "type": "module",
   "bugs": "https://github.com/francescov1/dotenv-cli-manager/issues",
   "homepage": "https://github.com/francescov1/dotenv-cli-manager",
   "repository": "francescov1/dotenv-cli-manager",
