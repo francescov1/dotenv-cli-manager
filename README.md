@@ -27,7 +27,7 @@ Create an env file for each environment and name it `.env.{environment}`:
 touch .env.local .env.development .env.staging .env.production
 ```
 
-Fill in your variables into each file. 
+Fill in your variables into each file. The `examples` folder has some .env files you can start with if you dont have any.
 
 > Projects are expected to use the same variable names across envs. If a varable shows up in any one of the env files, it will be given an empty value in all others. This is to enforce consistency and reduce the risk of missing variables in certain envs.
 
