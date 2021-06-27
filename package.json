@@ -1,15 +1,27 @@
 {
   "name": "dotenv-cli-manager",
   "version": "0.0.1",
-  "description": "",
+  "description": "A CLI-based UI for managing your environment variables.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "bin": {
+    "dcm": "./index.js"
+  },
+  "author": "Francesco Virga @francescov1",
   "license": "ISC",
   "type": "module",
+  "bugs": "https://github.com/francescov1/dotenv-cli-manager/issues",
+  "homepage": "https://github.com/francescov1/dotenv-cli-manager",
+  "repository": "francescov1/dotenv-cli-manager",
+  "keywords": [
+    ".env",
+    "env",
+    "cli",
+    "cli-ui"
+  ],
   "dependencies": {
     "glob": "^7.1.7",
     "inquirer": "^7.3.3"
