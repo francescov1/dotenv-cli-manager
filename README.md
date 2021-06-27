@@ -41,16 +41,20 @@ npx dcm
 
 ## In Development
 
-This project is in the early stages of development. Here's a few things in the roadmap:
+This project is in the early stages of development.
+
+### Roadmap
+
 - edit .env files in place to preserve comments and formatting
-- edit in real time (let user chose this mode or normal mode)
 - user-provided config for env file paths
 - convert to TS
+- edit files in real time, dont require a final "save" (let user chose between this mode and normal mode)
 - extend available file formats
-- walk-through project setup
+- a walk-through project setup
 - remote file editing
+- encrypted file editing
 
-# Known bugs
+### Known bugs
 
 - after editing a value, the table is re-rendered below, rather than rendering in place
 - after editing a value, the value's preview length will show its previous length until show/hide is toggled
