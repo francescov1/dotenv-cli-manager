@@ -343,12 +343,12 @@ class TablePrompt extends Base {
       "\n(Press " +
       chalk.cyan.bold("<l> <d> <p> <t>") +
       " to show/hide column, " +
+      chalk.cyan.bold("<Up> <Down> <Left> <Right>") +
+      " to navigate, " +
       chalk.cyan.bold("<space>") +
-      " to select, " +
-      chalk.cyan.bold("<Up and Down>") +
-      " to move rows, " +
-      chalk.cyan.bold("<Left and Right>") +
-      " to move columns)";
+      " to edit, " +
+      chalk.cyan.bold("<enter>") +
+      " to save)";
 
     const [firstIndex, lastIndex] = this.paginate();
 

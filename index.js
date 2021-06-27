@@ -68,6 +68,7 @@ async function runManager({ rows, columns }) {
         envs.forEach(env => writeEnv(env, allJsonContent[env]))
       }
       else {
+        // TODO: instead of throwing away changes, re-render the UI (user can always quit easily using ctrl-c)
         console.log("🗑  Throwing away changes")
       }
     }
