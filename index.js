@@ -21,7 +21,7 @@ inquirer.registerPrompt("table", inquirerTablePrompt);
 const pattern = ".env.*";
 const envPaths = glob.sync(pattern);
 if (!envPaths.length) {
-  console.warn(`No ${pattern} files found. To get started, pass the "--init" flag`)
+  console.warn(`No ${pattern} files found. To get started, create multiple files of the following format: ".env.{environment_name}" (ex: ".env.development")`)
   process.exit(0);
 }
 
@@ -49,11 +49,27 @@ async function runManager({ rows, columns }) {
 
       answers = newAnswers.environment;
     }
-    
+     
+     // TODO: give user option to print changes directly
+
      const allJsonContent = convertAnswerToJson(answers)
-     console.log("Done, writing response to .env file:")
-    //  console.log(allJsonContent);
-     Object.keys(allJsonContent).forEach(env => writeEnv(env, allJsonContent[env]))
+     const envs = Object.keys(allJsonContent)
+
+     const confirmAnswers = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "answer",
+          message: `Write changes to files ".env.${envs.join(`", ".env.`)}"?`
+        }
+      ])
+
+      if (confirmAnswers.answer === true) {
+        console.log("💾  Saving changes")
+        envs.forEach(env => writeEnv(env, allJsonContent[env]))
+      }
+      else {
+        console.log("🗑  Throwing away changes")
+      }
     }
     catch(err) {
       console.error("Error: ", err)
