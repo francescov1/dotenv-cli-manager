@@ -18,7 +18,8 @@ if (!envPaths.length) {
   process.exit(0);
 }
 
-const envs = envPaths.map(filename => filename.split(".env.")[1]);
+// get env names, filter out any encrypted envs
+const envs = envPaths.map(filename => filename.split(".env.")[1]).filter(envName => !envName.includes(".enc"))
 
 const { rows, columns } = prepareInquirerData(envs);
 runManager({ rows, columns }).then(() => { 
