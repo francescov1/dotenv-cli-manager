@@ -1,8 +1,12 @@
 # Dotenv CLI Manager
 
-## Overview
-
 A CLI-based UI for managing your environment variables. 
+
+[![Version](https://img.shields.io/npm/v/dotenv-cli-manager.svg)](https://npmjs.org/package/dotenv-cli-manager)
+[![License](https://img.shields.io/npm/l/dotenv-cli-manager.svg)](https://github.com/francescov1/dotenv-cli-manager/blob/master/package.json)
+<!-- [![npm](https://img.shields.io/npm/dt/dotenv-cli-manager)](https://www.npmjs.com/package/dotenv-cli-manager) -->
+
+## Overview
 
 This generates a `.env.{environment}` file for each environment and lets you manage them all in one place. 
 
