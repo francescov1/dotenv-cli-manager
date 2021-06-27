@@ -1,6 +1,6 @@
 {
   "name": "dotenv-cli-manager",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A CLI-based UI for managing your environment variables.",
   "main": "index.js",
   "scripts": {
