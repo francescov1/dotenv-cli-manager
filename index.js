@@ -1,15 +1,18 @@
 import inquirer from 'inquirer';
 import fs from "fs";
 import glob from "glob"
-import inquirerTablePrompt from "../inquirer-table-prompt/index.js";
+import inquirerTablePrompt from "./inquirer-table-prompt-fork/index.js";
 
 inquirer.registerPrompt("table", inquirerTablePrompt);
 
 // TODO: docs - cant use env name 'generic'
+// TODO :cli docs: press enter to submit, esc to cancel
 
 // TODO: cli - on first use, user can pass flag `--init` to be asked which envs they want 
 // (show list of common ones and option for custom). Check local files and compare to chosen envs - if there are any conflicts then ask user if they want to 
 // maintain local vars or wipe them and start fresh
+
+// TODO: add key to save 
 
 // for all other use cases (no `--init` flag):
 // search for all files in folder matching `.env*`, then parse out the envs.
@@ -171,6 +174,7 @@ function convertRawDotenvToJson(rawDotenv) {
  */
 function writeEnv(env, jsonContent) {
   // TODO: add timestamp at top of file
+  let fileStr = ''
   Object.keys(jsonContent).forEach(varName => {
     fileStr += `${varName}=${jsonContent[varName]}\n`;
   })
