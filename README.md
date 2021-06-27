@@ -21,6 +21,8 @@ npm install -g dotenv-cli-manager
 ```
 ## Usage
 
+> ⚠ Warning ⚠️ Still in development. Not recommended for production use. See [In Development](#in-development).
+
 Create an env file for each environment and name it `.env.{environment}`:
 
 ```bash
