@@ -59,7 +59,7 @@ async function runManager({ rows, columns }) {
         {
           type: "confirm",
           name: "answer",
-          message: `Write changes to files ".env.${envs.join(`", ".env.`)}"?`
+          message: `Write changes to files ".env.${envs.join(`", ".env.`)}"?\n  Note that this will overwrite any comments or formatting`
         }
       ])
 
