@@ -49,7 +49,6 @@ This project is in the early stages of development.
 
 ### Roadmap
 
-- edit .env files in place to preserve comments and formatting
 - user-provided config for env file paths
 - convert to TS
 - edit files in real time, dont require a final "save" (let user chose between this mode and normal mode)
