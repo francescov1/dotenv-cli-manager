@@ -29,21 +29,15 @@ runManager({ rows, columns }).then(() => {
 
 async function runManager({ rows, columns }) {
   try {
-    let answers = { rows, columns };
-    while (true) {
-      const newAnswers = await inquirer.prompt([
+      const {environment: answers} = await inquirer.prompt([
         {
           type: "table",
           name: "environment",
           message: "View or edit environment variables",
-          ...answers
+          rows,
+          columns
         }
       ]);
-
-      if (!newAnswers?.environment) break;
-
-      answers = newAnswers.environment;
-    }
      
      // TODO: give user option to print changes directly
 
@@ -119,7 +113,6 @@ function prepareInquirerData(envs) {
     }
   })
   
-  // console.log({ rows, columns })
   return { rows, columns }
   // return {
   //   columns: [

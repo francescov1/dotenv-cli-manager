@@ -7,11 +7,10 @@ const observe = require("inquirer/lib/utils/events");
 const Paginator = require("inquirer/lib/utils/paginator");
 const Table = require("cli-table");
 const { map, takeUntil } = require("rxjs/operators");
-const { spawn } = require("child_process");
-const fs = require("fs");
-const mkdirp = require("mkdirp");
 
-const inquirer = require("inquirer");
+// TODO: this is a hack solution, when users submit we are re-adding listeners without properly cleaning up the previous ones, we need to ensure
+// to clear all previous listeners before adding new ones
+require('events').EventEmitter.defaultMaxListeners = 50;
 
 // TODO: if someones value overwrites somethign in defaults, should highlight it to warn user
 class TablePrompt extends Base {
@@ -34,9 +33,11 @@ class TablePrompt extends Base {
     this.pointer = 0;
     this.horizontalPointer = 0;
     this.rows = new Choices(this.opt.rows, []);
-    this.values = this.columns.filter(() => true).map(() => undefined);
 
     this.isEditingValue = false;
+    this.isClearingValue = false;
+    this.clearingValueName = undefined;
+    this.clearingValueEnvironment = undefined;
 
     this.pageSize = this.opt.pageSize || 5;
   }
@@ -57,7 +58,9 @@ class TablePrompt extends Base {
     validation.success.forEach(this.onEnd.bind(this));
     validation.error.forEach(this.onError.bind(this));
 
-    events.keypress.forEach(({ key }) => {
+    events.keypress
+    .pipe(takeUntil(validation.success))
+    .forEach(({ key }) => {
       switch (key.name) {
         case "left":
           return this.onLeftKey();
@@ -88,37 +91,24 @@ class TablePrompt extends Base {
     cliCursor.hide();
     this.render();
 
-    // create temp dir for editing
-    // mkdirp('/tmp/env-editor')
-    // .then(made => console.log(`made directories, starting with ${made}`))
-
     return this;
   }
 
   getCurrentValue() {
-    // const currentValue = [];
-
-    // this.rows.choices.forEach((row, rowIndex) => {
-    //   currentValue.push(this.values[rowIndex]);
-    // });
-
-    // console.log("getCurrentValue")
-    // console.log("retruning: ", { rows: this.rows.choices, columns: this.columns.choices })
-    // return currentValue;
-
     if (this.isEditingValue) {
-      this.isEditingValue = false;
-      return {
-        rows: this.rows.choices.map(choice => ({
-          name: choice.name,
-          values: choice.values
-        })),
-        columns: this.columns.choices.map(choice => ({
-          name: choice.name,
-          value: choice.value
-        }))
-      };
-    } else return null;
+      return
+    }
+
+    return {
+      rows: this.rows.choices.map(choice => ({
+        name: choice.name,
+        values: choice.values
+      })),
+      columns: this.columns.choices.map(choice => ({
+        name: choice.name,
+        value: choice.value
+      }))
+    };
   }
 
   getSelectedValue() {
@@ -139,8 +129,37 @@ class TablePrompt extends Base {
   }
 
   onEnd(state) {
-    // this.status = "answered";
+    if (this.isEditingValue) {
+      this.isEditingValue = false;
 
+      if (this.inlineEditorConfirmPrompt) {
+        const answer = this.inlineEditorConfirmPrompt.replace(this.initialInlineEditorConfirmPrompt, '');
+        if (answer.trim().toLowerCase() === 'y') {
+          if (this.clearingValueEnvironment === 'all') {
+            this.rows.choices.splice(this.pointer, 1);
+          }
+          else {
+            this.rows.choices[this.pointer].values[this.horizontalPointer] = ''
+          }
+        }
+        
+        this.inlineEditorConfirmPrompt = undefined;
+        this.initialInlineEditorConfirmPrompt = undefined;
+        this.clearingValueName = undefined;
+        this.clearingValueEnvironment = undefined;
+      }
+      else if (this.inlineEditorName) {
+        this.setSelectedValue(this.inlineEditorValue);
+        this.inlineEditorName = undefined
+        this.inlineEditorValue = undefined
+      }
+
+      
+      this.rl.removeAllListeners()
+      this._run(this.done)
+      return
+    }
+    
     this.screen.done();
     // cliCursor.show();
     this.done(state.value);
@@ -183,137 +202,76 @@ class TablePrompt extends Base {
 
 
   async onKeyPress(keyPressed) {
-    if (this.isEditingValue) return;
+    if (this.isEditingValue) {
+      const key = this.inlineEditorConfirmPrompt ? 'inlineEditorConfirmPrompt' : 'inlineEditorValue'
+      if (keyPressed.key.name === 'backspace') {
+
+        // skip backspace if we are at the beginning of the prompt
+        if (this.inlineEditorConfirmPrompt && this.inlineEditorConfirmPrompt === this.initialInlineEditorConfirmPrompt) {
+          return
+        }
+
+        this[key] = this[key].slice(0, -1);
+      }
+      else if (keyPressed.value) {
+        this[key] += keyPressed.value;
+      }
+      
+      this.render()
+      return
+    };
 
     // check if this was a "hide" key & hide the associated column if so
-    const val = keyPressed.value;
-    const column = this.columns.find(column => column.alias === val);
+    const column = this.columns.find(column => column.alias === keyPressed.value);
     if (column) {
       column.isHidden = !column.isHidden;
       this.render();
       return
     }
 
-    // TODO: handle cmd+backspace to delete var from all envs
-
-    // check if this was a "backspace key"
-    if (val === '\x7F') {
+    if (keyPressed.value === 'x') {
       const { name } = this.rows.choices[this.pointer];
       this.isEditingValue = true;
 
       const { name: envName } = this.columns.choices[this.horizontalPointer];
       
-      const message = `Clear variable "${name}" from environment "${envName}"?`
+      this.initialInlineEditorConfirmPrompt = `Clear variable "${name}" from environment "${envName}"? (Y/n) `;
+      this.inlineEditorConfirmPrompt = this.initialInlineEditorConfirmPrompt
+      this.clearingValueName = name;
+      this.clearingValueEnvironment = envName;
       
-      const answer = await this.launchConfirmPrompt(message);
-      if (answer === true) {
-        this.rows.choices[this.pointer].values[this.horizontalPointer] = ''
-        // this.render();
-        return
-      }
+      this.render()
     }
-    
+    // check if this was a "backspace key"
+    else if (keyPressed.value === '\x7F') {
+      const { name } = this.rows.choices[this.pointer];
+      this.isEditingValue = true;
+      
+      this.initialInlineEditorConfirmPrompt = `Clear variable "${name}" from all environments? (Y/n) `;
+      this.inlineEditorConfirmPrompt = this.initialInlineEditorConfirmPrompt;
+      this.clearingValueName = name;
+      this.clearingValueEnvironment = 'all';
+      this.render()
+    }
+
+    // TODO: for adding a new value, cretae a 'prompt' helper so that we can easily re-use logic from the confirm prompt stuff
   }
-
-  // launchVim() {
-  //   const value = this.getSelectedValue();
-
-  //   const tempFilePath = "/tmp/env-editor/vi-session.txt"
-
-  //   fs.writeFileSync(tempFilePath, value, "utf8")
-
-  //   const vim = spawn("vim", [tempFilePath], { stdio: "inherit" });
-
-  //   // TODO: add support to only show one value, rather than entire column
-
-  //   vim.on("exit", (e, code) => {
-  //     console.log("finished " + code);
-
-  //     this.isEditingValue = false;
-  //     const newValue = fs.readFileSync(tempFilePath, "utf8")
-
-  //     // TODO: delete temp file immediately
-
-  //     this.setSelectedValue(newValue.trim())
-  //     this.render()
-  //   });
-  // }
-
-  launchEditor(name, currentValue) {
-    return inquirer
-      .prompt([
-        {
-          type: "input",
-          name,
-          message: `\n${name} =`,
-          // default: currentValue,
-          prefix: "",
-          suffix: "",
-          transformer: (input, _options) => {
-            if (input === "") return currentValue;
-
-            return input;
-          }
-        }
-      ])
-      .then(answers => answers[name])
-      .catch(err => {
-        if (err.isTtyError) {
-          console.error("isTtyError: ", err);
-          // Prompt couldn't be rendered in the current environment
-        } else {
-          // Something else went wrong
-          console.error("Error: ", err);
-        }
-      });
-  }
-
-  launchConfirmPrompt(message) {
-    return inquirer
-      .prompt([
-        {
-          type: "confirm",
-          name: "answer",
-          message: `\n${message}`
-        }
-      ])
-      .then(answers => answers.answer)
-      .catch(err => {
-        if (err.isTtyError) {
-          console.error("isTtyError: ", err);
-          // Prompt couldn't be rendered in the current environment
-        } else {
-          // Something else went wrong
-          console.error("Error: ", err);
-        }
-      });
-  }
-
-
-  // TODO: key to add and delete variable
 
   async onSpaceKey() {
     if (this.isEditingValue) return;
 
     this.isEditingValue = true;
-    // console.log("coords: ", { pointer: this.pointer, horizontalPointer: this.horizontalPointer})
-    // console.log('pointer at row', this.rows.choices[this.pointer])
 
     const { name, values } = this.rows.choices[this.pointer];
     const value = values[this.horizontalPointer];
 
-    const answer = await this.launchEditor(name, value);
-    // console.log("Value of \"" + name + "\" updated: \"" + value + "\" -> \"" + answer + "\"");
-    this.setSelectedValue(answer);
-    // this.isEditingValue = false
-    // this.render();
+    // this.rl.pause();
+
+    this.inlineEditorName = name
+    this.inlineEditorValue = value;
 
     // this.editorPosition = this.getSelectedValue().length
-
-    // const value = this.columns.get(this.horizontalPointer).value;
-
-    // this.values[this.pointer] = value;
-    // this.render();
+    this.render();
   }
 
   onUpKey() {
@@ -347,6 +305,12 @@ class TablePrompt extends Base {
       " to navigate, " +
       chalk.cyan.bold("<space>") +
       " to edit, " +
+      chalk.cyan.bold("<n>") +
+      " to add a new variable, " +
+      chalk.cyan.bold("<x>") +
+      " to delete a variable from the selected environment, " +
+      chalk.cyan.bold("<delete>") +
+      " to delete a variable from all environments, " +
       chalk.cyan.bold("<enter>") +
       " to save)";
 
@@ -376,10 +340,6 @@ class TablePrompt extends Base {
           this.status !== "answered" &&
           this.pointer === rowIndex &&
           this.horizontalPointer === columnIndex;
-        // const value =
-        //   column.value === this.values[rowIndex]
-        //     ? figures.radioOn
-        //     : figures.radioOff;
 
         const value = row.values[columnIndex];
 
@@ -389,7 +349,7 @@ class TablePrompt extends Base {
         // }
         // else {
         valueLabel = column.isHidden
-          ? new Array(value.length).fill(figures.star).join("")
+          ? new Array(value?.length).fill(figures.star).join("")
           : value;
         // }
 
@@ -412,6 +372,12 @@ class TablePrompt extends Base {
 
     if (error) {
       bottomContent = chalk.red(">> ") + error;
+    }
+    else if (this.inlineEditorValue) {
+      bottomContent = chalk.green(this.inlineEditorName) + chalk.bold(" = ") + this.inlineEditorValue;
+    }
+    else if (this.inlineEditorConfirmPrompt) {
+      bottomContent = chalk.green(this.inlineEditorConfirmPrompt)
     }
 
     this.screen.render(message, bottomContent);

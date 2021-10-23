@@ -51,6 +51,8 @@ This project is in the early stages of development.
 
 ### Roadmap
 
+- add new variable
+- add cursor to inline variable editor
 - user-provided config for env file paths
 - convert to TS
 - edit files in real time, dont require a final "save" (let user chose between this mode and normal mode)
