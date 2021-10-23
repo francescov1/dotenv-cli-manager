@@ -60,8 +60,3 @@ This project is in the early stages of development.
 - a walk-through project setup
 - remote file editing
 - encrypted file editing
-
-### Known bugs
-
-- after editing a value, the table is re-rendered below, rather than rendering in place
-- after editing a value, the value's preview length will show its previous length until show/hide is toggled
