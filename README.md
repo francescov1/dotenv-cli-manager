@@ -12,6 +12,8 @@ This generates a `.env.{environment}` file for each environment and lets you man
 
 https://user-images.githubusercontent.com/26126685/122695071-6375bb80-d20d-11eb-8a87-5994c8146273.mov
 
+_This project started as a fork of [inquirer-table-prompt](https://github.com/eduardoboucas/inquirer-table-prompt)_
+
 ## Install
 
 You can install this tool locally or globally

@@ -2,7 +2,7 @@
 
 const inquirer = require('inquirer');
 const glob = require("glob")
-const inquirerTablePrompt = require("./inquirer-table-prompt-fork/index.js");
+const inquirerTablePrompt = require("./inquirerTablePrompt");
 const EnvFile = require('./envFile');
 
 inquirer.registerPrompt("table", inquirerTablePrompt);
